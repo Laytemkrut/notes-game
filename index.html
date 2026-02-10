@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Древо Знаний - Космос</title>
+    <title>Моя Вселенная</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -17,8 +17,8 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #000;
             color: white;
-            overflow-x: hidden;
-            min-height: 100vh;
+            overflow: hidden;
+            height: 100vh;
         }
 
         /* Космический фон */
@@ -28,8 +28,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0;
             background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            z-index: 0;
         }
 
         .stars-layer {
@@ -48,288 +48,188 @@
             box-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
         }
 
-        .star.big {
-            width: 3px;
-            height: 3px;
-            box-shadow: 0 0 6px rgba(255, 255, 255, 1);
-        }
-
         @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
-        }
-
-        /* Планеты на фоне */
-        .planet {
-            position: fixed;
-            border-radius: 50%;
-            opacity: 0.3;
-            filter: blur(1px);
-            pointer-events: none;
-        }
-
-        .planet1 {
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
-            top: 10%;
-            right: 5%;
-            box-shadow: 0 0 50px rgba(255, 107, 107, 0.5);
-        }
-
-        .planet2 {
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle at 30% 30%, #4ecdc4, #2b8a81);
-            bottom: 20%;
-            left: 8%;
-            box-shadow: 0 0 40px rgba(78, 205, 196, 0.5);
-        }
-
-        .planet3 {
-            width: 80px;
-            height: 80px;
-            background: radial-gradient(circle at 30% 30%, #ffa07a, #ff6347);
-            top: 50%;
-            right: 10%;
-            box-shadow: 0 0 30px rgba(255, 160, 122, 0.5);
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
         }
 
         /* Контейнер */
         .container {
             position: relative;
             z-index: 2;
-            padding: 15px;
-            min-height: 100vh;
-            padding-bottom: 100px;
-        }
-
-        /* Панель цитаты дня */
-        .quote-panel {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            position: relative;
+            height: 100vh;
             overflow: hidden;
         }
 
-        .quote-panel::before {
-            content: '💫';
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            font-size: 30px;
-            opacity: 0.3;
-        }
-
-        .quote-header {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            opacity: 0.7;
-            margin-bottom: 10px;
-            text-align: center;
+        /* Панель цитаты */
+        .quote-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 12px 15px;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
 
         .quote-text {
-            font-size: 16px;
-            line-height: 1.6;
+            font-size: 13px;
+            line-height: 1.4;
             font-style: italic;
-            text-align: center;
-            margin-bottom: 8px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            margin-bottom: 5px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
         }
 
         .quote-author {
-            font-size: 13px;
+            font-size: 11px;
             opacity: 0.6;
             text-align: right;
         }
 
-        /* Заголовок */
-        h1 {
-            text-align: center;
-            margin-bottom: 15px;
-            font-size: 26px;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* Статистика */
-        .stats-panel {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 30px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 24px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            opacity: 0.6;
-            margin-top: 3px;
-        }
-
-        /* Древо навыков */
-        .skill-tree {
-            position: relative;
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px 10px;
-        }
-
-        /* SVG линии связи между навыками */
-        #tree-connections {
+        /* Канвас для вселенной */
+        #universe-canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
-            z-index: 1;
+            touch-action: none;
         }
 
-        .connection-line {
-            stroke: rgba(102, 126, 234, 0.3);
-            stroke-width: 2;
-            fill: none;
-            stroke-dasharray: 5, 5;
-        }
-
-        .connection-line.active {
-            stroke: rgba(102, 126, 234, 0.8);
-            stroke-width: 3;
-            animation: flowLine 2s linear infinite;
-        }
-
-        @keyframes flowLine {
-            0% { stroke-dashoffset: 0; }
-            100% { stroke-dashoffset: -20; }
-        }
-
-        /* Уровни древа */
-        .tree-level {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            margin-bottom: 80px;
-            z-index: 2;
-        }
-
-        /* Узел навыка */
-        .skill-node {
-            position: relative;
-            width: 90px;
-            height: 90px;
-            margin: 0 15px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .skill-orb {
-            width: 100%;
-            height: 100%;
+        /* Центральное ядро "Я" */
+        .core-me {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-            border: 3px solid rgba(255, 255, 255, 0.2);
+            background: radial-gradient(circle at 30% 30%, #667eea, #764ba2);
+            box-shadow: 0 0 60px rgba(102, 126, 234, 0.8),
+                        0 0 100px rgba(118, 75, 162, 0.6),
+                        inset 0 0 30px rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            z-index: 50;
+            cursor: pointer;
+            animation: coreGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes coreGlow {
+            0%, 100% {
+                box-shadow: 0 0 60px rgba(102, 126, 234, 0.8),
+                            0 0 100px rgba(118, 75, 162, 0.6),
+                            inset 0 0 30px rgba(255, 255, 255, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 80px rgba(102, 126, 234, 1),
+                            0 0 120px rgba(118, 75, 162, 0.8),
+                            inset 0 0 40px rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        /* Ветви */
+        .branch {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--branch-color), var(--branch-color-dark));
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 30px var(--branch-color),
+                        inset 0 0 20px rgba(255, 255, 255, 0.2);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 40;
         }
 
-        .skill-orb::before {
-            content: '';
+        .branch:active {
+            transform: scale(0.9);
+        }
+
+        .branch-icon {
+            font-size: 28px;
+            margin-bottom: 2px;
+        }
+
+        .branch-name {
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+        }
+
+        .branch-count {
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: rotate(45deg);
-            animation: shimmer 3s linear infinite;
+            bottom: -8px;
+            right: -8px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            border: 2px solid var(--branch-color);
         }
 
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) rotate(45deg); }
+        /* Планеты-заметки */
+        .note-planet {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--planet-color), var(--planet-color-dark));
+            box-shadow: 0 0 15px var(--planet-color),
+                        inset 0 0 10px rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 30;
+            animation: float 6s ease-in-out infinite;
         }
 
-        .skill-node.active .skill-orb {
-            border-color: currentColor;
-            box-shadow: 0 0 30px currentColor, 0 5px 15px rgba(0, 0, 0, 0.3);
-            animation: pulse 2s ease-in-out infinite;
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .note-planet:active {
+            transform: scale(0.85);
         }
 
-        .skill-icon {
-            font-size: 32px;
+        /* Линии связи */
+        .connection-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(102, 126, 234, 0.3),
+                transparent);
+            transform-origin: left center;
+            pointer-events: none;
             z-index: 1;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+            animation: pulse-line 2s ease-in-out infinite;
         }
 
-        .skill-count {
-            position: absolute;
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: bold;
-            border: 1px solid currentColor;
-            white-space: nowrap;
+        @keyframes pulse-line {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
         }
 
-        .skill-name {
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            font-weight: bold;
-            white-space: nowrap;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-        }
-
-        .skill-node:active {
-            transform: scale(0.95);
-        }
-
-        /* Модальное окно для просмотра заметок */
+        /* Модальное окно */
         .modal {
             display: none;
             position: fixed;
@@ -337,24 +237,28 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             z-index: 1000;
             overflow-y: auto;
-            animation: fadeIn 0.3s;
         }
 
         .modal.active {
             display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal-content {
             background: linear-gradient(135deg, #1a1a2e, #16213e);
-            margin: 20px;
+            margin: 60px 15px 15px;
             padding: 25px;
             border-radius: 20px;
             border: 2px solid rgba(102, 126, 234, 0.5);
             box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
-            position: relative;
         }
 
         .modal-header {
@@ -369,6 +273,9 @@
         .modal-title {
             font-size: 22px;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .modal-close {
@@ -380,7 +287,6 @@
             border-radius: 50%;
             font-size: 20px;
             cursor: pointer;
-            transition: all 0.3s;
         }
 
         .modal-close:active {
@@ -388,37 +294,45 @@
             transform: scale(0.9);
         }
 
+        /* Кнопка переименования */
+        .rename-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .rename-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(0.95);
+        }
+
+        /* Список заметок */
         .notes-list {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            max-height: 60vh;
+            gap: 12px;
+            margin-bottom: 20px;
+            max-height: 40vh;
             overflow-y: auto;
         }
 
         .note-card {
             background: rgba(255, 255, 255, 0.05);
             padding: 15px;
-            border-radius: 15px;
-            border-left: 4px solid;
+            border-radius: 12px;
+            border-left: 4px solid var(--branch-color);
             position: relative;
-            animation: slideInLeft 0.3s ease;
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
         }
 
         .note-text {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             line-height: 1.5;
+            padding-right: 35px;
         }
 
         .note-date {
@@ -451,14 +365,8 @@
             opacity: 0.5;
         }
 
-        .empty-notes-icon {
-            font-size: 60px;
-            margin-bottom: 15px;
-        }
-
-        /* Форма добавления */
+        /* Форма */
         .add-form {
-            margin-top: 20px;
             padding-top: 20px;
             border-top: 2px solid rgba(255, 255, 255, 0.1);
         }
@@ -474,6 +382,7 @@
             opacity: 0.8;
         }
 
+        .form-group input,
         .form-group textarea {
             width: 100%;
             padding: 12px;
@@ -483,10 +392,14 @@
             color: white;
             font-size: 15px;
             font-family: inherit;
+        }
+
+        .form-group textarea {
             min-height: 100px;
             resize: vertical;
         }
 
+        .form-group input:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: #667eea;
@@ -516,7 +429,6 @@
 
         .btn-primary:active {
             transform: scale(0.95);
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
         }
 
         .btn-secondary {
@@ -529,22 +441,54 @@
             transform: scale(0.95);
         }
 
-        /* Плавающая кнопка добавления */
+        /* Статистика */
+        .stats-panel {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+            z-index: 100;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.6;
+        }
+
+        /* FAB */
         .fab {
             position: fixed;
-            bottom: 25px;
-            right: 25px;
-            width: 65px;
-            height: 65px;
+            bottom: 70px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
             border: none;
             color: white;
-            font-size: 30px;
+            font-size: 28px;
             cursor: pointer;
             box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
             z-index: 100;
-            transition: all 0.3s;
         }
 
         .fab:active {
@@ -583,9 +527,6 @@
     <!-- Космический фон -->
     <div id="space-bg">
         <div class="stars-layer" id="stars"></div>
-        <div class="planet planet1"></div>
-        <div class="planet planet2"></div>
-        <div class="planet planet3"></div>
     </div>
 
     <!-- Loader -->
@@ -597,13 +538,17 @@
     <div class="container">
         <!-- Цитата дня -->
         <div class="quote-panel">
-            <div class="quote-header">✨ Вдохновение дня</div>
             <div class="quote-text" id="quote-text">Загрузка...</div>
             <div class="quote-author" id="quote-author"></div>
         </div>
 
-        <!-- Заголовок -->
-        <h1>🌌 Древо Знаний</h1>
+        <!-- Канвас вселенной -->
+        <canvas id="universe-canvas"></canvas>
+
+        <!-- Центральное ядро -->
+        <div class="core-me" id="core-me" onclick="showCoreInfo()">
+            Я
+        </div>
 
         <!-- Статистика -->
         <div class="stats-panel">
@@ -612,82 +557,32 @@
                 <div class="stat-label">Заметок</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number" id="active-skills">0</div>
-                <div class="stat-label">Активных</div>
+                <div class="stat-number" id="active-branches">0</div>
+                <div class="stat-label">Ветвей</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number" id="progress-percent">0%</div>
-                <div class="stat-label">Прогресс</div>
-            </div>
-        </div>
-
-        <!-- Древо навыков -->
-        <div class="skill-tree">
-            <svg id="tree-connections"></svg>
-            
-            <!-- Уровень 1 (верх) -->
-            <div class="tree-level">
-                <div class="skill-node" data-skill="work" style="color: #FF6B6B">
-                    <div class="skill-name">Работа</div>
-                    <div class="skill-orb">
-                        <div class="skill-icon">⭐</div>
-                    </div>
-                    <div class="skill-count">0</div>
-                </div>
-            </div>
-
-            <!-- Уровень 2 -->
-            <div class="tree-level">
-                <div class="skill-node" data-skill="personal" style="color: #4ECDC4">
-                    <div class="skill-name">Личное</div>
-                    <div class="skill-orb">
-                        <div class="skill-icon">💫</div>
-                    </div>
-                    <div class="skill-count">0</div>
-                </div>
-                <div class="skill-node" data-skill="study" style="color: #45B7D1">
-                    <div class="skill-name">Учёба</div>
-                    <div class="skill-orb">
-                        <div class="skill-icon">🌟</div>
-                    </div>
-                    <div class="skill-count">0</div>
-                </div>
-            </div>
-
-            <!-- Уровень 3 (низ) -->
-            <div class="tree-level">
-                <div class="skill-node" data-skill="ideas" style="color: #FFA07A">
-                    <div class="skill-name">Идеи</div>
-                    <div class="skill-orb">
-                        <div class="skill-icon">✨</div>
-                    </div>
-                    <div class="skill-count">0</div>
-                </div>
-                <div class="skill-node" data-skill="goals" style="color: #98D8C8">
-                    <div class="skill-name">Цели</div>
-                    <div class="skill-orb">
-                        <div class="skill-icon">🌠</div>
-                    </div>
-                    <div class="skill-count">0</div>
-                </div>
+                <div class="stat-number" id="total-planets">0</div>
+                <div class="stat-label">Планет</div>
             </div>
         </div>
     </div>
 
-    <!-- Плавающая кнопка -->
+    <!-- FAB -->
     <button class="fab" id="fab-btn">+</button>
 
     <!-- Модальное окно -->
     <div class="modal" id="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" id="modal-title">Навык</div>
+                <div class="modal-title" id="modal-title">
+                    <span id="modal-icon"></span>
+                    <span id="modal-name"></span>
+                    <button class="rename-btn" onclick="renameBranch()">✏️</button>
+                </div>
                 <button class="modal-close" onclick="closeModal()">×</button>
             </div>
             
-            <div class="notes-list" id="notes-list">
-                <!-- Заметки будут здесь -->
-            </div>
+            <div class="notes-list" id="notes-list"></div>
 
             <div class="add-form">
                 <div class="form-group">
