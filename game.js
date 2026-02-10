@@ -2,269 +2,371 @@
 let tg = window.Telegram.WebApp;
 tg.expand();
 tg.ready();
+tg.setHeaderColor('#000000');
+tg.setBackgroundColor('#000000');
 
-// Настройка темы приложения
-tg.setHeaderColor('#0f0c29');
-tg.setBackgroundColor('#0f0c29');
+// Цитаты дня (ЗДЕСЬ ВЫ ВСТАВИТЕ СВОИ ЦИТАТЫ)
+const dailyQuotes = [
+    { text: "Знание — это сила.", author: "Фрэнсис Бэкон" },
+    { text: "Единственный способ делать великую работу — любить то, что ты делаешь.", author: "Стив Джобс" },
+    { text: "Образование — это самое мощное оружие, которым можно изменить мир.", author: "Нельсон Мандела" },
+    { text: "Будущее принадлежит тем, кто верит в красоту своих мечтаний.", author: "Элеонора Рузвельт" },
+    { text: "Не откладывайте на завтра то, что можно сделать сегодня.", author: "Бенджамин Франклин" },
+    { text: "Путешествие в тысячу миль начинается с одного шага.", author: "Лао-цзы" },
+    { text: "Успех — это способность идти от одной неудачи к другой, не теряя энтузиазма.", author: "Уинстон Черчилль" }
+];
 
-// Данные ветвей
-const branches = {
-    work: { name: '⭐ Работа', color: '#FF6B6B', emoji: '⭐', notes: [] },
-    personal: { name: '💫 Личное', color: '#4ECDC4', emoji: '💫', notes: [] },
-    study: { name: '🌟 Учёба', color: '#45B7D1', emoji: '🌟', notes: [] },
-    ideas: { name: '✨ Идеи', color: '#FFA07A', emoji: '✨', notes: [] },
-    goals: { name: '🌠 Цели', color: '#98D8C8', emoji: '🌠', notes: [] }
+// Конфигурация навыков
+const skills = {
+    work: {
+        name: 'Работа',
+        icon: '⭐',
+        color: '#FF6B6B',
+        notes: [],
+        position: { level: 0, index: 0 }
+    },
+    personal: {
+        name: 'Личное',
+        icon: '💫',
+        color: '#4ECDC4',
+        notes: [],
+        position: { level: 1, index: 0 }
+    },
+    study: {
+        name: 'Учёба',
+        icon: '🌟',
+        color: '#45B7D1',
+        notes: [],
+        position: { level: 1, index: 1 }
+    },
+    ideas: {
+        name: 'Идеи',
+        icon: '✨',
+        color: '#FFA07A',
+        notes: [],
+        position: { level: 2, index: 0 }
+    },
+    goals: {
+        name: 'Цели',
+        icon: '🌠',
+        color: '#98D8C8',
+        notes: [],
+        position: { level: 2, index: 1 }
+    }
 };
 
-// Ключ для хранения данных в localStorage
-const STORAGE_KEY = 'space_notes_' + (tg.initDataUnsafe?.user?.id || 'guest');
+// Связи между навыками (откуда -> куда)
+const connections = [
+    { from: 'work', to: 'personal' },
+    { from: 'work', to: 'study' },
+    { from: 'personal', to: 'ideas' },
+    { from: 'study', to: 'goals' },
+    { from: 'ideas', to: 'goals' }
+];
 
-// Загрузка данных из localStorage
+// Текущий открытый навык
+let currentSkill = null;
+
+// Ключ для хранения
+const STORAGE_KEY = 'skill_tree_' + (tg.initDataUnsafe?.user?.id || 'guest');
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+
+function init() {
+    showLoader();
+    loadData();
+    createStars();
+    displayDailyQuote();
+    updateSkillTree();
+    drawConnections();
+    setupEventListeners();
+    hideLoader();
+    
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => tg.close());
+}
+
+// ==================== ДАННЫЕ ====================
+
 function loadData() {
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
             const data = JSON.parse(saved);
-            Object.keys(branches).forEach(key => {
+            Object.keys(skills).forEach(key => {
                 if (data[key]) {
-                    branches[key].notes = data[key];
+                    skills[key].notes = data[key];
                 }
             });
         }
     } catch (e) {
-        console.error('Ошибка загрузки данных:', e);
+        console.error('Ошибка загрузки:', e);
     }
 }
 
-// Сохранение данных в localStorage
 function saveData() {
     try {
         const data = {};
-        Object.keys(branches).forEach(key => {
-            data[key] = branches[key].notes;
+        Object.keys(skills).forEach(key => {
+            data[key] = skills[key].notes;
         });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         
-        // Опционально отправляем в Telegram Cloud Storage
         if (tg.CloudStorage) {
             tg.CloudStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
     } catch (e) {
-        console.error('Ошибка сохранения данных:', e);
+        console.error('Ошибка сохранения:', e);
     }
 }
 
-// Создание звёзд на фоне
+// ==================== ЦИТАТА ДНЯ ====================
+
+function displayDailyQuote() {
+    const today = new Date().toDateString();
+    const savedQuoteDate = localStorage.getItem('quote_date');
+    
+    let quoteIndex;
+    
+    if (savedQuoteDate === today) {
+        quoteIndex = parseInt(localStorage.getItem('quote_index') || '0');
+    } else {
+        // Новый день - новая цитата
+        quoteIndex = Math.floor(Math.random() * dailyQuotes.length);
+        localStorage.setItem('quote_date', today);
+        localStorage.setItem('quote_index', quoteIndex.toString());
+    }
+    
+    const quote = dailyQuotes[quoteIndex];
+    document.getElementById('quote-text').textContent = quote.text;
+    document.getElementById('quote-author').textContent = '— ' + quote.author;
+}
+
+// ==================== КОСМИЧЕСКИЙ ФОН ====================
+
 function createStars() {
-    const starsContainer = document.getElementById('stars');
-    for (let i = 0; i < 150; i++) {
+    const container = document.getElementById('stars');
+    const starCount = 200;
+    
+    for (let i = 0; i < starCount; i++) {
         const star = document.createElement('div');
         star.className = 'star';
+        
+        if (Math.random() > 0.9) {
+            star.classList.add('big');
+        }
+        
         star.style.left = Math.random() * 100 + '%';
         star.style.top = Math.random() * 100 + '%';
+        star.style.animation = `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`;
         star.style.animationDelay = Math.random() * 3 + 's';
-        starsContainer.appendChild(star);
-    }
-}
-
-// Анимация космоса на canvas
-function initSpaceCanvas() {
-    const canvas = document.getElementById('space-canvas');
-    const ctx = canvas.getContext('2d');
-    
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    const particles = [];
-    const particleCount = 60;
-    
-    for (let i = 0; i < particleCount; i++) {
-        particles.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: (Math.random() - 0.5) * 0.5,
-            radius: Math.random() * 2 + 0.5
-        });
-    }
-
-    function animate() {
-        ctx.fillStyle = 'rgba(15, 12, 41, 0.05)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        particles.forEach(p => {
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-            ctx.fill();
-
-            p.x += p.vx;
-            p.y += p.vy;
-
-            if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-            if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-        });
-
-        requestAnimationFrame(animate);
-    }
-    
-    animate();
-}
-
-// Обновление статистики
-function updateStats() {
-    let totalNotes = 0;
-    let activeBranches = 0;
-    
-    Object.keys(branches).forEach(key => {
-        const count = branches[key].notes.length;
-        totalNotes += count;
-        if (count > 0) activeBranches++;
-    });
-    
-    document.getElementById('total-notes').textContent = totalNotes;
-    document.getElementById('active-branches').textContent = activeBranches;
-}
-
-// Отрисовка древа заметок
-function renderTree() {
-    const container = document.getElementById('tree-container');
-    container.innerHTML = '';
-    
-    let hasNotes = false;
-
-    Object.keys(branches).forEach(branchKey => {
-        const branch = branches[branchKey];
-        if (branch.notes.length > 0) hasNotes = true;
         
-        const branchDiv = document.createElement('div');
-        branchDiv.className = 'branch';
+        container.appendChild(star);
+    }
+}
 
-        const header = document.createElement('div');
-        header.className = 'branch-header';
-        header.style.borderColor = branch.color;
-        header.onclick = () => toggleNotes(branchKey);
-        header.innerHTML = `
-            <span class="branch-title">${branch.name}</span>
-            <span class="branch-count">${branch.notes.length}</span>
-        `;
+// ==================== ДРЕВО НАВЫКОВ ====================
 
-        const notesList = document.createElement('div');
-        notesList.className = 'notes-list';
-        notesList.id = `notes-${branchKey}`;
-
-        branch.notes.forEach((note, index) => {
-            const noteItem = document.createElement('div');
-            noteItem.className = 'note-item';
-            noteItem.style.borderColor = branch.color;
-            noteItem.innerHTML = `
-                <div class="note-text">${escapeHtml(note.text)}</div>
-                <div class="note-date">${formatDate(note.created_at)}</div>
-                <button class="delete-btn" onclick="deleteNote('${branchKey}', ${index})">×</button>
-            `;
-            notesList.appendChild(noteItem);
-        });
-
-        branchDiv.appendChild(header);
-        branchDiv.appendChild(notesList);
-        container.appendChild(branchDiv);
+function updateSkillTree() {
+    let totalNotes = 0;
+    let activeSkills = 0;
+    
+    Object.keys(skills).forEach(skillKey => {
+        const skill = skills[skillKey];
+        const count = skill.notes.length;
+        totalNotes += count;
+        
+        if (count > 0) activeSkills++;
+        
+        // Обновляем UI навыка
+        const node = document.querySelector(`[data-skill="${skillKey}"]`);
+        const countEl = node.querySelector('.skill-count');
+        countEl.textContent = count;
+        
+        if (count > 0) {
+            node.classList.add('active');
+        } else {
+            node.classList.remove('active');
+        }
     });
     
-    // Показать пустое состояние если нет заметок
-    if (!hasNotes) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">🌌</div>
-                <div class="empty-state-text">Ваш космос пуст<br>Добавьте первую заметку!</div>
-            </div>
-        `;
-    }
+    // Обновляем статистику
+    document.getElementById('total-notes').textContent = totalNotes;
+    document.getElementById('active-skills').textContent = activeSkills;
     
-    updateStats();
+    const progress = Math.min(100, Math.floor((totalNotes / 50) * 100));
+    document.getElementById('progress-percent').textContent = progress + '%';
+    
+    // Обновляем линии связи
+    updateConnectionLines();
 }
 
-// Переключение отображения заметок
-function toggleNotes(branchKey) {
-    const notesList = document.getElementById(`notes-${branchKey}`);
-    notesList.classList.toggle('active');
+function drawConnections() {
+    const svg = document.getElementById('tree-connections');
+    const treeContainer = document.querySelector('.skill-tree');
     
-    // Вибрация при открытии
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('light');
-    }
+    // Устанавливаем размер SVG
+    svg.setAttribute('width', treeContainer.offsetWidth);
+    svg.setAttribute('height', treeContainer.offsetHeight);
+    
+    connections.forEach(conn => {
+        const fromNode = document.querySelector(`[data-skill="${conn.from}"]`);
+        const toNode = document.querySelector(`[data-skill="${conn.to}"]`);
+        
+        if (!fromNode || !toNode) return;
+        
+        const fromRect = fromNode.getBoundingClientRect();
+        const toRect = toNode.getBoundingClientRect();
+        const treeRect = treeContainer.getBoundingClientRect();
+        
+        const x1 = fromRect.left - treeRect.left + fromRect.width / 2;
+        const y1 = fromRect.top - treeRect.top + fromRect.height / 2;
+        const x2 = toRect.left - treeRect.left + toRect.width / 2;
+        const y2 = toRect.top - treeRect.top + toRect.height / 2;
+        
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.classList.add('connection-line');
+        line.dataset.from = conn.from;
+        line.dataset.to = conn.to;
+        
+        svg.appendChild(line);
+    });
 }
 
-// Открытие модального окна
-function openModal() {
+function updateConnectionLines() {
+    const lines = document.querySelectorAll('.connection-line');
+    
+    lines.forEach(line => {
+        const fromSkill = line.dataset.from;
+        const toSkill = line.dataset.to;
+        
+        const fromActive = skills[fromSkill].notes.length > 0;
+        const toActive = skills[toSkill].notes.length > 0;
+        
+        if (fromActive && toActive) {
+            line.classList.add('active');
+        } else {
+            line.classList.remove('active');
+        }
+    });
+}
+
+// ==================== МОДАЛЬНОЕ ОКНО ====================
+
+function openSkillModal(skillKey) {
+    currentSkill = skillKey;
+    const skill = skills[skillKey];
+    
+    // Устанавливаем заголовок
+    const title = document.getElementById('modal-title');
+    title.textContent = `${skill.icon} ${skill.name}`;
+    title.style.color = skill.color;
+    
+    // Отображаем заметки
+    renderNotes();
+    
+    // Открываем модалку
     document.getElementById('modal').classList.add('active');
-    document.getElementById('note-text').focus();
     
     if (tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('medium');
     }
 }
 
-// Закрытие модального окна
 function closeModal() {
     document.getElementById('modal').classList.remove('active');
-    document.getElementById('note-text').value = '';
+    document.getElementById('note-input').value = '';
+    currentSkill = null;
     
     if (tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('light');
     }
 }
 
-// Сохранение заметки
-function saveNote() {
-    const branchKey = document.getElementById('branch-select').value;
-    const noteText = document.getElementById('note-text').value.trim();
-
-    if (!noteText) {
-        tg.showAlert('Пожалуйста, введите текст заметки!');
+function renderNotes() {
+    const container = document.getElementById('notes-list');
+    const skill = skills[currentSkill];
+    
+    if (skill.notes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-notes">
+                <div class="empty-notes-icon">🌌</div>
+                <div>Пока нет заметок в этой ветви.<br>Добавьте первую!</div>
+            </div>
+        `;
         return;
     }
+    
+    container.innerHTML = '';
+    
+    skill.notes.forEach((note, index) => {
+        const card = document.createElement('div');
+        card.className = 'note-card';
+        card.style.borderColor = skill.color;
+        card.innerHTML = `
+            <div class="note-text">${escapeHtml(note.text)}</div>
+            <div class="note-date">${formatDate(note.created_at)}</div>
+            <button class="note-delete" onclick="deleteNote(${index})">×</button>
+        `;
+        container.appendChild(card);
+    });
+}
 
+// ==================== ЗАМЕТКИ ====================
+
+function saveNote() {
+    if (!currentSkill) return;
+    
+    const input = document.getElementById('note-input');
+    const text = input.value.trim();
+    
+    if (!text) {
+        tg.showAlert('Введите текст заметки!');
+        return;
+    }
+    
     const note = {
         id: Date.now(),
-        text: noteText,
-        created_at: new Date().toISOString(),
-        branch: branchKey
+        text: text,
+        created_at: new Date().toISOString()
     };
-
-    branches[branchKey].notes.unshift(note); // Добавляем в начало
+    
+    skills[currentSkill].notes.unshift(note);
     saveData();
     
-    // Показываем уведомление
-    const branchName = branches[branchKey].name;
+    // Обновляем UI
+    renderNotes();
+    updateSkillTree();
+    
+    // Очищаем поле
+    input.value = '';
+    
+    // Уведомление
     tg.showPopup({
-        title: '✅ Заметка сохранена!',
-        message: `Добавлена в "${branchName}"`,
+        title: '✅ Успех!',
+        message: `Заметка добавлена в "${skills[currentSkill].name}"`,
         buttons: [{type: 'ok'}]
     });
     
-    // Вибрация успеха
     if (tg.HapticFeedback) {
         tg.HapticFeedback.notificationOccurred('success');
     }
-
-    closeModal();
-    renderTree();
 }
 
-// Удаление заметки
-function deleteNote(branchKey, index) {
+function deleteNote(index) {
+    if (!currentSkill) return;
+    
     tg.showConfirm('Удалить эту заметку?', (confirmed) => {
         if (confirmed) {
-            branches[branchKey].notes.splice(index, 1);
+            skills[currentSkill].notes.splice(index, 1);
             saveData();
-            renderTree();
+            renderNotes();
+            updateSkillTree();
             
-            // Вибрация при удалении
             if (tg.HapticFeedback) {
                 tg.HapticFeedback.notificationOccurred('warning');
             }
@@ -272,147 +374,130 @@ function deleteNote(branchKey, index) {
     });
 }
 
-// Форматирование даты
+// ==================== БЫСТРОЕ ДОБАВЛЕНИЕ ====================
+
+function showQuickAdd() {
+    // Создаём меню выбора навыка
+    const buttons = Object.keys(skills).map(key => ({
+        text: `${skills[key].icon} ${skills[key].name}`,
+        id: key
+    }));
+    
+    tg.showPopup({
+        title: 'Выберите ветвь',
+        message: 'В какую ветвь добавить заметку?',
+        buttons: buttons.concat([{type: 'cancel'}])
+    }, (buttonId) => {
+        if (buttonId !== 'cancel' && skills[buttonId]) {
+            openSkillModal(buttonId);
+        }
+    });
+}
+
+// ==================== УТИЛИТЫ ====================
+
 function formatDate(isoString) {
     const date = new Date(isoString);
     const now = new Date();
     const diff = now - date;
     
-    // Менее минуты назад
-    if (diff < 60000) {
-        return 'только что';
-    }
+    if (diff < 60000) return 'только что';
+    if (diff < 3600000) return Math.floor(diff / 60000) + ' мин. назад';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + ' ч. назад';
     
-    // Менее часа назад
-    if (diff < 3600000) {
-        const minutes = Math.floor(diff / 60000);
-        return `${minutes} мин. назад`;
-    }
-    
-    // Менее суток назад
-    if (diff < 86400000) {
-        const hours = Math.floor(diff / 3600000);
-        return `${hours} ч. назад`;
-    }
-    
-    // Более суток
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    
-    return `${day}.${month}.${year} ${hours}:${minutes}`;
+    return date.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
-// Экранирование HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-// Обработчики событий
-document.getElementById('add-btn').addEventListener('click', openModal);
-document.getElementById('save-btn').addEventListener('click', saveNote);
-document.getElementById('cancel-btn').addEventListener('click', closeModal);
+function showLoader() {
+    document.getElementById('loader').classList.remove('hidden');
+}
 
-// Закрытие модального окна по клику на фон
-document.getElementById('modal').addEventListener('click', (e) => {
-    if (e.target.id === 'modal') {
-        closeModal();
-    }
-});
+function hideLoader() {
+    setTimeout(() => {
+        document.getElementById('loader').classList.add('hidden');
+    }, 500);
+}
 
-// Сохранение по Enter (с Shift для переноса строки)
-document.getElementById('note-text').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        saveNote();
-    }
-});
+// ==================== СОБЫТИЯ ====================
 
-// Показать кнопку "Назад" в Telegram
-tg.BackButton.show();
-tg.BackButton.onClick(() => {
-    tg.close();
-});
+function setupEventListeners() {
+    // Клики по навыкам
+    document.querySelectorAll('.skill-node').forEach(node => {
+        node.addEventListener('click', () => {
+            const skillKey = node.dataset.skill;
+            openSkillModal(skillKey);
+        });
+    });
+    
+    // FAB кнопка
+    document.getElementById('fab-btn').addEventListener('click', showQuickAdd);
+    
+    // Закрытие модалки по фону
+    document.getElementById('modal').addEventListener('click', (e) => {
+        if (e.target.id === 'modal') {
+            closeModal();
+        }
+    });
+    
+    // Enter для сохранения
+    document.getElementById('note-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.ctrlKey) {
+            saveNote();
+        }
+    });
+    
+    // Перерисовка линий при изменении размера
+    window.addEventListener('resize', () => {
+        const svg = document.getElementById('tree-connections');
+        svg.innerHTML = '';
+        drawConnections();
+    });
+}
 
-// Главная кнопка Telegram (опционально)
-tg.MainButton.text = "Добавить заметку";
-tg.MainButton.color = "#667eea";
-tg.MainButton.onClick(() => {
-    openModal();
-});
+// ==================== ЭКСПОРТ (для отладки) ====================
 
-// Экспорт данных (для разработки)
 window.exportData = function() {
     const data = {};
-    Object.keys(branches).forEach(key => {
-        data[key] = branches[key].notes;
+    Object.keys(skills).forEach(key => {
+        data[key] = skills[key].notes;
     });
     console.log(JSON.stringify(data, null, 2));
-    tg.showAlert('Данные выведены в консоль');
+    tg.showAlert('Данные в консоли');
 };
 
-// Очистка всех данных (для разработки)
-window.clearAllData = function() {
+window.clearAll = function() {
     tg.showConfirm('Удалить ВСЕ заметки?', (confirmed) => {
         if (confirmed) {
-            Object.keys(branches).forEach(key => {
-                branches[key].notes = [];
+            Object.keys(skills).forEach(key => {
+                skills[key].notes = [];
             });
-            localStorage.removeItem(STORAGE_KEY);
-            renderTree();
+            localStorage.clear();
+            updateSkillTree();
+            if (currentSkill) renderNotes();
             tg.showAlert('Все данные удалены');
         }
     });
 };
 
-// Инициализация приложения
-function init() {
-    // Показываем загрузчик
-    const loader = document.getElementById('loader');
-    loader.classList.add('active');
-    
-    // Загружаем данные
-    loadData();
-    
-    // Создаём фон
-    createStars();
-    initSpaceCanvas();
-    
-    // Отрисовываем интерфейс
-    renderTree();
-    
-    // Скрываем загрузчик
-    setTimeout(() => {
-        loader.classList.remove('active');
-        // Показываем главную кнопку если есть заметки
-        const totalNotes = Object.values(branches).reduce((sum, b) => sum + b.notes.length, 0);
-        if (totalNotes > 0) {
-            tg.MainButton.show();
-        }
-    }, 500);
-    
-    // Уведомляем Telegram что приложение готово
-    tg.ready();
-}
+// ==================== ЗАПУСК ====================
 
-// Запуск при загрузке страницы
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
     init();
 }
 
-// Предотвращение случайного закрытия
-window.addEventListener('beforeunload', (e) => {
-    saveData();
-});
-
-// Отправка события в Telegram Analytics (если включено)
-if (tg.initDataUnsafe?.user) {
-    console.log('User ID:', tg.initDataUnsafe.user.id);
-    console.log('User Name:', tg.initDataUnsafe.user.first_name);
-                   }
+// Сохранение при закрытии
+window.addEventListener('beforeunload', saveData);
