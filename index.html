@@ -19,19 +19,62 @@
             color: white;
             overflow: hidden;
             height: 100vh;
+            position: relative;
         }
 
-        /* Космический фон */
+        /* Космический фон с туманностями */
         #space-bg {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            background: radial-gradient(ellipse at 20% 30%, #1a0033 0%, #000000 50%),
+                        radial-gradient(ellipse at 80% 70%, #001a33 0%, #000000 50%);
             z-index: 0;
         }
 
+        .nebula {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.3;
+            pointer-events: none;
+            animation: nebulaPulse 10s ease-in-out infinite;
+        }
+
+        @keyframes nebulaPulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+        }
+
+        .nebula1 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, #ff006e, transparent);
+            top: 20%;
+            left: 10%;
+        }
+
+        .nebula2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #00d9ff, transparent);
+            bottom: 10%;
+            right: 15%;
+            animation-delay: 3s;
+        }
+
+        .nebula3 {
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, #ffbe0b, transparent);
+            top: 60%;
+            left: 70%;
+            animation-delay: 6s;
+        }
+
+        /* Звёзды с мерцанием */
         .stars-layer {
             position: fixed;
             width: 100%;
@@ -41,118 +84,216 @@
 
         .star {
             position: absolute;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+        }
+
+        .star.tiny { width: 1px; height: 1px; }
+        .star.small { width: 2px; height: 2px; }
+        .star.medium { width: 3px; height: 3px; box-shadow: 0 0 6px rgba(255, 255, 255, 1); }
+        .star.large { width: 4px; height: 4px; box-shadow: 0 0 8px rgba(255, 255, 255, 1); }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); }
+        }
+
+        /* Кометы */
+        .comet {
+            position: absolute;
             width: 2px;
             height: 2px;
             background: white;
             border-radius: 50%;
-            box-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 10px #fff, 0 0 20px #fff;
+            animation: cometFly 3s linear infinite;
         }
 
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
+        @keyframes cometFly {
+            0% {
+                transform: translate(0, 0);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% {
+                transform: translate(-300px, 300px);
+                opacity: 0;
+            }
         }
 
-        /* Контейнер */
-        .container {
-            position: relative;
-            z-index: 2;
-            height: 100vh;
-            overflow: hidden;
+        .comet::after {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+            left: 2px;
+            top: 0;
         }
 
-        /* Панель цитаты */
-        .quote-panel {
+        /* Контейнер вселенной с зумом и перемещением */
+        .universe-container {
+            position: absolute;
+            width: 3000px;
+            height: 3000px;
+            top: 50%;
+            left: 50%;
+            transform-origin: center center;
+            transition: transform 0.3s ease-out;
+            cursor: grab;
+        }
+
+        .universe-container.grabbing {
+            cursor: grabbing;
+        }
+
+        /* Верхняя панель */
+        .top-bar {
             position: fixed;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+            padding: 10px;
+            z-index: 200;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quote-panel {
+            flex: 1;
+            background: rgba(102, 126, 234, 0.15);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 12px 15px;
-            z-index: 100;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-right: 10px;
         }
 
         .quote-text {
-            font-size: 13px;
-            line-height: 1.4;
+            font-size: 11px;
+            line-height: 1.3;
             font-style: italic;
-            margin-bottom: 5px;
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            margin-bottom: 3px;
         }
 
         .quote-author {
-            font-size: 11px;
+            font-size: 9px;
             opacity: 0.6;
             text-align: right;
         }
 
-        /* Канвас для вселенной */
-        #universe-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            touch-action: none;
+        .premium-btn {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            animation: premiumGlow 2s ease-in-out infinite;
         }
 
-        /* Центральное ядро "Я" */
+        @keyframes premiumGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
+        }
+
+        .premium-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Центральное ядро */
         .core-me {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, #667eea, #764ba2);
-            box-shadow: 0 0 60px rgba(102, 126, 234, 0.8),
-                        0 0 100px rgba(118, 75, 162, 0.6),
-                        inset 0 0 30px rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 80px rgba(102, 126, 234, 1),
+                        0 0 150px rgba(118, 75, 162, 0.8),
+                        inset 0 0 40px rgba(255, 255, 255, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
+            font-size: 48px;
             font-weight: bold;
-            z-index: 50;
+            z-index: 100;
             cursor: pointer;
             animation: coreGlow 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        .core-me::before {
+            content: '';
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            animation: coreRing 4s linear infinite;
+        }
+
+        @keyframes coreRing {
+            0% { transform: rotate(0deg) scale(1); opacity: 0.5; }
+            100% { transform: rotate(360deg) scale(1.1); opacity: 0; }
         }
 
         @keyframes coreGlow {
             0%, 100% {
-                box-shadow: 0 0 60px rgba(102, 126, 234, 0.8),
-                            0 0 100px rgba(118, 75, 162, 0.6),
-                            inset 0 0 30px rgba(255, 255, 255, 0.2);
+                box-shadow: 0 0 80px rgba(102, 126, 234, 1),
+                            0 0 150px rgba(118, 75, 162, 0.8),
+                            inset 0 0 40px rgba(255, 255, 255, 0.3);
             }
             50% {
-                box-shadow: 0 0 80px rgba(102, 126, 234, 1),
-                            0 0 120px rgba(118, 75, 162, 0.8),
-                            inset 0 0 40px rgba(255, 255, 255, 0.3);
+                box-shadow: 0 0 120px rgba(102, 126, 234, 1),
+                            0 0 200px rgba(118, 75, 162, 1),
+                            inset 0 0 60px rgba(255, 255, 255, 0.4);
             }
         }
 
-        /* Ветви */
+        /* Ветви с улучшенным дизайном */
         .branch {
             position: absolute;
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, var(--branch-color), var(--branch-color-dark));
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 30px var(--branch-color),
-                        inset 0 0 20px rgba(255, 255, 255, 0.2);
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 40px var(--branch-color),
+                        inset 0 0 30px rgba(255, 255, 255, 0.2);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
-            z-index: 40;
+            z-index: 90;
+            position: relative;
+        }
+
+        .branch::before {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border: 2px dashed var(--branch-color);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: branchOrbit 20s linear infinite;
+        }
+
+        @keyframes branchOrbit {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .branch:active {
@@ -160,73 +301,195 @@
         }
 
         .branch-icon {
-            font-size: 28px;
-            margin-bottom: 2px;
+            font-size: 36px;
+            margin-bottom: 4px;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
         }
 
         .branch-name {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
             text-align: center;
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
         }
 
         .branch-count {
             position: absolute;
-            bottom: -8px;
-            right: -8px;
-            background: rgba(0, 0, 0, 0.9);
+            bottom: -10px;
+            right: -10px;
+            background: linear-gradient(135deg, var(--branch-color), var(--branch-color-dark));
             color: white;
-            width: 24px;
-            height: 24px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: bold;
-            border: 2px solid var(--branch-color);
+            border: 3px solid #000;
+            box-shadow: 0 0 15px var(--branch-color);
         }
 
-        /* Планеты-заметки */
+        /* Планеты с разными скинами */
         .note-planet {
             position: absolute;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, var(--planet-color), var(--planet-color-dark));
-            box-shadow: 0 0 15px var(--planet-color),
-                        inset 0 0 10px rgba(255, 255, 255, 0.2);
             cursor: pointer;
             transition: all 0.3s;
-            z-index: 30;
+            z-index: 80;
             animation: float 6s ease-in-out infinite;
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(180deg); }
         }
 
         .note-planet:active {
             transform: scale(0.85);
         }
 
-        /* Линии связи */
+        /* Скины планет */
+        .planet-skin-default {
+            background: radial-gradient(circle at 30% 30%, var(--planet-color), var(--planet-color-dark));
+            box-shadow: 0 0 20px var(--planet-color),
+                        inset 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .planet-skin-crystal {
+            background: linear-gradient(135deg, 
+                rgba(255,255,255,0.3),
+                var(--planet-color),
+                var(--planet-color-dark));
+            box-shadow: 0 0 30px var(--planet-color),
+                        inset 0 0 20px rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .planet-skin-neon {
+            background: radial-gradient(circle at 50% 50%, 
+                var(--planet-color),
+                transparent);
+            box-shadow: 0 0 40px var(--planet-color),
+                        0 0 60px var(--planet-color),
+                        inset 0 0 25px var(--planet-color);
+            border: 3px solid var(--planet-color);
+        }
+
+        .planet-skin-galaxy {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 0%, transparent 2%),
+                radial-gradient(circle at 60% 70%, rgba(255,255,255,0.6) 0%, transparent 3%),
+                radial-gradient(circle at 40% 50%, rgba(255,255,255,0.7) 0%, transparent 2%),
+                linear-gradient(135deg, var(--planet-color), var(--planet-color-dark));
+            box-shadow: 0 0 35px var(--planet-color);
+        }
+
+        /* Линии связи с эффектом */
         .connection-line {
             position: absolute;
-            height: 2px;
+            height: 3px;
             background: linear-gradient(90deg, 
-                transparent, 
-                rgba(102, 126, 234, 0.3),
+                transparent,
+                var(--line-color),
                 transparent);
             transform-origin: left center;
             pointer-events: none;
             z-index: 1;
-            animation: pulse-line 2s ease-in-out infinite;
+            opacity: 0.4;
         }
 
-        @keyframes pulse-line {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.6; }
+        .connection-line::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--line-color);
+            border-radius: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px var(--line-color);
+            animation: lineParticle 3s linear infinite;
+        }
+
+        @keyframes lineParticle {
+            0% { left: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+
+        /* Управление зумом */
+        .zoom-controls {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 200;
+        }
+
+        .zoom-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .zoom-btn:active {
+            transform: scale(0.9);
+            background: rgba(102, 126, 234, 0.8);
+        }
+
+        /* Нижняя панель */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, transparent 100%);
+            padding: 12px;
+            z-index: 200;
+        }
+
+        .stats-panel {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 2px;
         }
 
         /* Модальное окно */
@@ -254,11 +517,11 @@
 
         .modal-content {
             background: linear-gradient(135deg, #1a1a2e, #16213e);
-            margin: 60px 15px 15px;
+            margin: 60px 15px 80px;
             padding: 25px;
             border-radius: 20px;
             border: 2px solid rgba(102, 126, 234, 0.5);
-            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
         }
 
         .modal-header {
@@ -271,37 +534,20 @@
         }
 
         .modal-title {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .modal-close {
-            background: rgba(255, 0, 0, 0.3);
-            border: none;
-            color: white;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        .modal-close:active {
-            background: rgba(255, 0, 0, 0.6);
-            transform: scale(0.9);
-        }
-
-        /* Кнопка переименования */
         .rename-btn {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 13px;
             cursor: pointer;
             margin-left: 10px;
         }
@@ -311,28 +557,55 @@
             transform: scale(0.95);
         }
 
-        /* Список заметок */
+        .modal-close {
+            background: rgba(255, 0, 0, 0.3);
+            border: none;
+            color: white;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .modal-close:active {
+            background: rgba(255, 0, 0, 0.6);
+            transform: scale(0.9);
+        }
+
         .notes-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
             margin-bottom: 20px;
-            max-height: 40vh;
+            max-height: 50vh;
             overflow-y: auto;
         }
 
         .note-card {
             background: rgba(255, 255, 255, 0.05);
             padding: 15px;
-            border-radius: 12px;
-            border-left: 4px solid var(--branch-color);
+            border-radius: 15px;
+            border-left: 5px solid var(--branch-color);
             position: relative;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .note-text {
-            margin-bottom: 8px;
-            line-height: 1.5;
-            padding-right: 35px;
+            margin-bottom: 10px;
+            line-height: 1.6;
+            padding-right: 40px;
         }
 
         .note-date {
@@ -342,16 +615,16 @@
 
         .note-delete {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 12px;
+            right: 12px;
             background: rgba(255, 0, 0, 0.3);
             border: none;
             color: white;
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
         }
 
         .note-delete:active {
@@ -361,11 +634,10 @@
 
         .empty-notes {
             text-align: center;
-            padding: 40px 20px;
+            padding: 50px 20px;
             opacity: 0.5;
         }
 
-        /* Форма */
         .add-form {
             padding-top: 20px;
             border-top: 2px solid rgba(255, 255, 255, 0.1);
@@ -378,45 +650,42 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-size: 13px;
-            opacity: 0.8;
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0.9;
         }
 
-        .form-group input,
         .form-group textarea {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.05);
             color: white;
             font-size: 15px;
             font-family: inherit;
-        }
-
-        .form-group textarea {
-            min-height: 100px;
+            min-height: 120px;
             resize: vertical;
         }
 
-        .form-group input:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: #667eea;
             background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
         }
 
         .form-buttons {
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
 
         .btn {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             border: none;
-            border-radius: 10px;
-            font-size: 15px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
@@ -425,15 +694,18 @@
         .btn-primary {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         .btn-primary:active {
             transform: scale(0.95);
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.6);
         }
 
         .btn-secondary {
             background: rgba(255, 255, 255, 0.1);
             color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .btn-secondary:active {
@@ -441,58 +713,60 @@
             transform: scale(0.95);
         }
 
-        /* Статистика */
-        .stats-panel {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        /* Премиум модалка */
+        .premium-modal {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 3px solid #ffd700;
+        }
+
+        .skin-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .skin-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 15px;
-            padding: 10px;
-            display: flex;
-            justify-content: space-around;
-            z-index: 100;
-        }
-
-        .stat-item {
+            padding: 20px;
             text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
         }
 
-        .stat-number {
-            font-size: 18px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .skin-option.selected {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
         }
 
-        .stat-label {
-            font-size: 10px;
-            opacity: 0.6;
+        .skin-option.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
-        /* FAB */
-        .fab {
-            position: fixed;
-            bottom: 70px;
-            right: 20px;
+        .skin-preview {
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border: none;
-            color: white;
-            font-size: 28px;
-            cursor: pointer;
-            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
-            z-index: 100;
+            margin: 0 auto 10px;
         }
 
-        .fab:active {
-            transform: scale(0.9) rotate(90deg);
+        .skin-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .skin-badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
         }
 
         /* Loader */
@@ -501,14 +775,14 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            z-index: 2000;
+            z-index: 3000;
         }
 
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-top: 4px solid #667eea;
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.2);
+            border-top: 5px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -527,6 +801,12 @@
     <!-- Космический фон -->
     <div id="space-bg">
         <div class="stars-layer" id="stars"></div>
+        <div class="nebula nebula1"></div>
+        <div class="nebula nebula2"></div>
+        <div class="nebula nebula3"></div>
+        <div class="comet" style="top: 20%; right: 10%;"></div>
+        <div class="comet" style="top: 60%; right: 30%; animation-delay: 2s;"></div>
+        <div class="comet" style="top: 40%; right: 70%; animation-delay: 4s;"></div>
     </div>
 
     <!-- Loader -->
@@ -534,23 +814,29 @@
         <div class="spinner"></div>
     </div>
 
-    <!-- Контейнер -->
-    <div class="container">
-        <!-- Цитата дня -->
+    <!-- Верхняя панель -->
+    <div class="top-bar">
         <div class="quote-panel">
             <div class="quote-text" id="quote-text">Загрузка...</div>
             <div class="quote-author" id="quote-author"></div>
         </div>
+        <button class="premium-btn" onclick="showPremium()">👑 Premium</button>
+    </div>
 
-        <!-- Канвас вселенной -->
-        <canvas id="universe-canvas"></canvas>
+    <!-- Контейнер вселенной -->
+    <div class="universe-container" id="universe">
+        <div class="core-me" id="core-me" onclick="showCoreInfo()">Я</div>
+    </div>
 
-        <!-- Центральное ядро -->
-        <div class="core-me" id="core-me" onclick="showCoreInfo()">
-            Я
-        </div>
+    <!-- Управление зумом -->
+    <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomIn()">+</button>
+        <button class="zoom-btn" onclick="resetZoom()">⌂</button>
+        <button class="zoom-btn" onclick="zoomOut()">−</button>
+    </div>
 
-        <!-- Статистика -->
+    <!-- Нижняя панель -->
+    <div class="bottom-bar">
         <div class="stats-panel">
             <div class="stat-item">
                 <div class="stat-number" id="total-notes">0</div>
@@ -567,10 +853,7 @@
         </div>
     </div>
 
-    <!-- FAB -->
-    <button class="fab" id="fab-btn">+</button>
-
-    <!-- Модальное окно -->
+    <!-- Модальное окно ветви -->
     <div class="modal" id="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -586,14 +869,60 @@
 
             <div class="add-form">
                 <div class="form-group">
-                    <label>Новая заметка:</label>
+                    <label>✨ Новая заметка:</label>
                     <textarea id="note-input" placeholder="Введите вашу заметку..."></textarea>
                 </div>
                 <div class="form-buttons">
-                    <button class="btn btn-primary" onclick="saveNote()">Сохранить</button>
+                    <button class="btn btn-primary" onclick="saveNote()">Добавить планету</button>
                     <button class="btn btn-secondary" onclick="document.getElementById('note-input').value = ''">Очистить</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Премиум модалка -->
+    <div class="modal" id="premium-modal">
+        <div class="modal-content premium-modal">
+            <div class="modal-header">
+                <div class="modal-title" style="color: #ffd700;">
+                    👑 Premium Скины
+                </div>
+                <button class="modal-close" onclick="closePremium()">×</button>
+            </div>
+            
+            <div style="margin-bottom: 20px; text-align: center; opacity: 0.8;">
+                Выберите стиль для ваших планет
+            </div>
+
+            <div class="skin-selector">
+                <div class="skin-option selected" onclick="selectSkin('default')">
+                    <div class="skin-preview planet-skin-default" style="--planet-color: #667eea; --planet-color-dark: #764ba2;"></div>
+                    <div class="skin-name">Стандарт</div>
+                    <div style="font-size: 11px; opacity: 0.6;">Бесплатно</div>
+                </div>
+
+                <div class="skin-option locked" onclick="unlockSkin('crystal')">
+                    <div class="skin-preview planet-skin-crystal" style="--planet-color: #4ECDC4; --planet-color-dark: #2B8A81;"></div>
+                    <div class="skin-name">Кристалл</div>
+                    <div class="skin-badge">PRO</div>
+                </div>
+
+                <div class="skin-option locked" onclick="unlockSkin('neon')">
+                    <div class="skin-preview planet-skin-neon" style="--planet-color: #FF6B6B; --planet-color-dark: #C92A2A;"></div>
+                    <div class="skin-name">Неон</div>
+                    <div class="skin-badge">PRO</div>
+                </div>
+
+                <div class="skin-option locked" onclick="unlockSkin('galaxy')">
+                    <div class="skin-preview planet-skin-galaxy" style="--planet-color: #9575CD; --planet-color-dark: #673AB7;"></div>
+                    <div class="skin-name">Галактика</div>
+                    <div class="skin-badge">PRO</div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="buyPremium()">
+                Получить Premium - 299₽
+            </button>
         </div>
     </div>
 
