@@ -5,7 +5,7 @@ tg.ready();
 tg.setHeaderColor('#000000');
 tg.setBackgroundColor('#000000');
 
-// ВСЕ ЦИТАТЫ
+// Все цитаты (полный список из предыдущей версии)
 const dailyQuotes = [
     { text: "Счастье есть цель, к которой стремится всякий разумный человек", author: "Аль-Фараби" },
     { text: "Разум — это свет, освещающий путь человеку", author: "Аль-Фараби" },
@@ -69,69 +69,35 @@ const dailyQuotes = [
     { text: "Понимание опаснее знания", author: "Неизвестный автор" }
 ];
 
-// Конфигурация ветвей (7 штук)
+// Конфигурация ветвей
 const branches = {
-    personal: {
-        name: 'Личное',
-        icon: '💫',
-        color: '#FF6B6B',
-        colorDark: '#C92A2A',
-        notes: [],
-        angle: 0
-    },
-    development: {
-        name: 'Саморазвитие',
-        icon: '🌟',
-        color: '#4ECDC4',
-        colorDark: '#2B8A81',
-        notes: [],
-        angle: 51.43
-    },
-    work: {
-        name: 'Работа',
-        icon: '⭐',
-        color: '#45B7D1',
-        colorDark: '#2E7D9A',
-        notes: [],
-        angle: 102.86
-    },
-    hobby: {
-        name: 'Хобби',
-        icon: '🎨',
-        color: '#FFA07A',
-        colorDark: '#FF6347',
-        notes: [],
-        angle: 154.29
-    },
-    finance: {
-        name: 'Финансы',
-        icon: '💰',
-        color: '#98D8C8',
-        colorDark: '#5FA89E',
-        notes: [],
-        angle: 205.71
-    },
-    media: {
-        name: 'Фильмы/Сериалы',
-        icon: '🎬',
-        color: '#F06292',
-        colorDark: '#C2185B',
-        notes: [],
-        angle: 257.14
-    },
-    diary: {
-        name: 'Ежедневник',
-        icon: '📔',
-        color: '#9575CD',
-        colorDark: '#673AB7',
-        notes: [],
-        angle: 308.57
-    }
+    personal: { name: 'Личное', icon: '💫', color: '#FF6B6B', colorDark: '#C92A2A', notes: [], angle: 0 },
+    development: { name: 'Саморазвитие', icon: '🌟', color: '#4ECDC4', colorDark: '#2B8A81', notes: [], angle: 51.43 },
+    work: { name: 'Работа', icon: '⭐', color: '#45B7D1', colorDark: '#2E7D9A', notes: [], angle: 102.86 },
+    hobby: { name: 'Хобби', icon: '🎨', color: '#FFA07A', colorDark: '#FF6347', notes: [], angle: 154.29 },
+    finance: { name: 'Финансы', icon: '💰', color: '#98D8C8', colorDark: '#5FA89E', notes: [], angle: 205.71 },
+    media: { name: 'Фильмы/Сериалы', icon: '🎬', color: '#F06292', colorDark: '#C2185B', notes: [], angle: 257.14 },
+    diary: { name: 'Ежедневник', icon: '📔', color: '#9575CD', colorDark: '#673AB7', notes: [], angle: 308.57 }
 };
 
+// Система зума и перемещения
+let scale = 1;
+let posX = 0;
+let posY = 0;
+let isDragging = false;
+let startX = 0;
+let startY = 0;
 let currentBranch = null;
+
+// Премиум
+let isPremium = false;
+let currentSkin = 'default';
+
+// Ключи хранения
 const STORAGE_KEY = 'universe_' + (tg.initDataUnsafe?.user?.id || 'guest');
 const NAMES_KEY = 'universe_names_' + (tg.initDataUnsafe?.user?.id || 'guest');
+const PREMIUM_KEY = 'premium_' + (tg.initDataUnsafe?.user?.id || 'guest');
+const SKIN_KEY = 'skin_' + (tg.initDataUnsafe?.user?.id || 'guest');
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 
@@ -139,17 +105,16 @@ function init() {
     showLoader();
     loadData();
     loadCustomNames();
+    loadPremium();
     createStars();
     displayDailyQuote();
     renderUniverse();
-    setupCanvas();
+    setupControls();
     updateStats();
     hideLoader();
     
     tg.BackButton.show();
     tg.BackButton.onClick(() => tg.close());
-    
-    document.getElementById('fab-btn').onclick = showQuickAdd;
 }
 
 // ==================== ДАННЫЕ ====================
@@ -160,9 +125,7 @@ function loadData() {
         if (saved) {
             const data = JSON.parse(saved);
             Object.keys(branches).forEach(key => {
-                if (data[key]) {
-                    branches[key].notes = data[key];
-                }
+                if (data[key]) branches[key].notes = data[key];
             });
         }
     } catch (e) {
@@ -177,7 +140,6 @@ function saveData() {
             data[key] = branches[key].notes;
         });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        
         if (tg.CloudStorage) {
             tg.CloudStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
@@ -192,14 +154,10 @@ function loadCustomNames() {
         if (saved) {
             const names = JSON.parse(saved);
             Object.keys(names).forEach(key => {
-                if (branches[key]) {
-                    branches[key].name = names[key];
-                }
+                if (branches[key]) branches[key].name = names[key];
             });
         }
-    } catch (e) {
-        console.error('Ошибка загрузки имен:', e);
-    }
+    } catch (e) {}
 }
 
 function saveCustomNames() {
@@ -209,9 +167,17 @@ function saveCustomNames() {
             names[key] = branches[key].name;
         });
         localStorage.setItem(NAMES_KEY, JSON.stringify(names));
-    } catch (e) {
-        console.error('Ошибка сохранения имен:', e);
-    }
+    } catch (e) {}
+}
+
+function loadPremium() {
+    isPremium = localStorage.getItem(PREMIUM_KEY) === 'true';
+    currentSkin = localStorage.getItem(SKIN_KEY) || 'default';
+}
+
+function savePremium() {
+    localStorage.setItem(PREMIUM_KEY, isPremium.toString());
+    localStorage.setItem(SKIN_KEY, currentSkin);
 }
 
 // ==================== ЦИТАТА ДНЯ ====================
@@ -238,13 +204,20 @@ function displayDailyQuote() {
 
 function createStars() {
     const container = document.getElementById('stars');
-    for (let i = 0; i < 300; i++) {
+    const sizes = ['tiny', 'small', 'medium', 'large'];
+    
+    for (let i = 0; i < 400; i++) {
         const star = document.createElement('div');
-        star.className = 'star';
+        const sizeClass = sizes[Math.floor(Math.random() * sizes.length)];
+        star.className = 'star ' + sizeClass;
         star.style.left = Math.random() * 100 + '%';
         star.style.top = Math.random() * 100 + '%';
-        star.style.animation = `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`;
-        star.style.animationDelay = Math.random() * 3 + 's';
+        
+        if (Math.random() > 0.7) {
+            star.style.animation = `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`;
+            star.style.animationDelay = Math.random() * 3 + 's';
+        }
+        
         container.appendChild(star);
     }
 }
@@ -252,31 +225,33 @@ function createStars() {
 // ==================== ВСЕЛЕННАЯ ====================
 
 function renderUniverse() {
-    const container = document.querySelector('.container');
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    const radius = Math.min(window.innerWidth, window.innerHeight) * 0.35;
+    const universe = document.getElementById('universe');
     
-    // Удаляем старые ветви и планеты
-    document.querySelectorAll('.branch, .note-planet, .connection-line').forEach(el => el.remove());
+    // Удаляем старые элементы
+    universe.querySelectorAll('.branch, .note-planet, .connection-line').forEach(el => el.remove());
+    
+    const centerX = 1500; // Центр большого холста
+    const centerY = 1500;
+    const radius = 500; // Радиус орбиты ветвей
     
     // Рисуем ветви
     Object.keys(branches).forEach(key => {
         const branch = branches[key];
         const angle = branch.angle * (Math.PI / 180);
-        const x = centerX + radius * Math.cos(angle) - 40;
-        const y = centerY + radius * Math.sin(angle) - 40;
+        const x = centerX + radius * Math.cos(angle) - 50;
+        const y = centerY + radius * Math.sin(angle) - 50;
         
         // Линия от центра к ветви
         const line = document.createElement('div');
         line.className = 'connection-line';
-        const distance = Math.sqrt(Math.pow(x + 40 - centerX, 2) + Math.pow(y + 40 - centerY, 2));
-        const lineAngle = Math.atan2(y + 40 - centerY, x + 40 - centerX) * (180 / Math.PI);
+        const distance = Math.sqrt(Math.pow(x + 50 - centerX, 2) + Math.pow(y + 50 - centerY, 2));
+        const lineAngle = Math.atan2(y + 50 - centerY, x + 50 - centerX) * (180 / Math.PI);
         line.style.width = distance + 'px';
         line.style.left = centerX + 'px';
         line.style.top = centerY + 'px';
         line.style.transform = `rotate(${lineAngle}deg)`;
-        container.appendChild(line);
+        line.style.setProperty('--line-color', branch.color);
+        universe.appendChild(line);
         
         // Ветвь
         const branchEl = document.createElement('div');
@@ -291,11 +266,14 @@ function renderUniverse() {
             <div class="branch-name">${branch.name}</div>
             <div class="branch-count">${branch.notes.length}</div>
         `;
-        branchEl.onclick = () => openBranchModal(key);
-        container.appendChild(branchEl);
+        branchEl.onclick = (e) => {
+            e.stopPropagation();
+            openBranchModal(key);
+        };
+        universe.appendChild(branchEl);
         
-        // Планеты-заметки вокруг ветви
-        renderNotePlanets(key, x + 40, y + 40);
+        // Планеты-заметки
+        renderNotePlanets(key, x + 50, y + 50);
     });
 }
 
@@ -304,26 +282,29 @@ function renderNotePlanets(branchKey, branchX, branchY) {
     const planetCount = branch.notes.length;
     if (planetCount === 0) return;
     
-    const container = document.querySelector('.container');
-    const orbitRadius = 60 + Math.min(planetCount * 5, 40);
+    const universe = document.getElementById('universe');
+    const orbitRadius = 120 + Math.min(planetCount * 3, 60);
     
     branch.notes.forEach((note, index) => {
         const angle = (index / planetCount) * 2 * Math.PI;
-        const size = 20 + Math.min(note.text.length / 10, 15);
+        const size = 25 + Math.min(note.text.length / 8, 20);
         const x = branchX + orbitRadius * Math.cos(angle) - size / 2;
         const y = branchY + orbitRadius * Math.sin(angle) - size / 2;
         
         const planet = document.createElement('div');
-        planet.className = 'note-planet';
+        planet.className = `note-planet planet-skin-${currentSkin}`;
         planet.style.width = size + 'px';
         planet.style.height = size + 'px';
         planet.style.left = x + 'px';
         planet.style.top = y + 'px';
         planet.style.setProperty('--planet-color', branch.color);
         planet.style.setProperty('--planet-color-dark', branch.colorDark);
-        planet.style.animationDelay = (index * 0.3) + 's';
-        planet.onclick = () => showNotePlanet(branchKey, index);
-        container.appendChild(planet);
+        planet.style.animationDelay = (index * 0.5) + 's';
+        planet.onclick = (e) => {
+            e.stopPropagation();
+            showNotePlanet(branchKey, index);
+        };
+        universe.appendChild(planet);
     });
 }
 
@@ -344,16 +325,90 @@ function showNotePlanet(branchKey, noteIndex) {
             saveData();
             renderUniverse();
             updateStats();
-            
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('warning');
-            }
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
         }
     });
     
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('light');
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+}
+
+// ==================== ЗУМ И ПЕРЕМЕЩЕНИЕ ====================
+
+function setupControls() {
+    const universe = document.getElementById('universe');
+    
+    // Перемещение
+    universe.addEventListener('mousedown', startDrag);
+    universe.addEventListener('touchstart', startDrag);
+    
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchend', stopDrag);
+    
+    // Применяем начальную трансформацию
+    updateTransform();
+}
+
+function startDrag(e) {
+    isDragging = true;
+    const universe = document.getElementById('universe');
+    universe.classList.add('grabbing');
+    
+    if (e.type === 'touchstart') {
+        startX = e.touches[0].clientX - posX;
+        startY = e.touches[0].clientY - posY;
+    } else {
+        startX = e.clientX - posX;
+        startY = e.clientY - posY;
     }
+}
+
+function drag(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    if (e.type === 'touchmove') {
+        posX = e.touches[0].clientX - startX;
+        posY = e.touches[0].clientY - startY;
+    } else {
+        posX = e.clientX - startX;
+        posY = e.clientY - startY;
+    }
+    
+    updateTransform();
+}
+
+function stopDrag() {
+    isDragging = false;
+    const universe = document.getElementById('universe');
+    universe.classList.remove('grabbing');
+}
+
+function updateTransform() {
+    const universe = document.getElementById('universe');
+    universe.style.transform = `translate(calc(-50% + ${posX}px), calc(-50% + ${posY}px)) scale(${scale})`;
+}
+
+function zoomIn() {
+    scale = Math.min(scale + 0.2, 3);
+    updateTransform();
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+}
+
+function zoomOut() {
+    scale = Math.max(scale - 0.2, 0.3);
+    updateTransform();
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+}
+
+function resetZoom() {
+    scale = 1;
+    posX = 0;
+    posY = 0;
+    updateTransform();
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 }
 
 // ==================== МОДАЛЬНОЕ ОКНО ====================
@@ -369,19 +424,14 @@ function openBranchModal(branchKey) {
     renderNotesList();
     document.getElementById('modal').classList.add('active');
     
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('medium');
-    }
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 }
 
 function closeModal() {
     document.getElementById('modal').classList.remove('active');
     document.getElementById('note-input').value = '';
     currentBranch = null;
-    
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('light');
-    }
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 }
 
 function renderNotesList() {
@@ -391,8 +441,8 @@ function renderNotesList() {
     if (branch.notes.length === 0) {
         container.innerHTML = `
             <div class="empty-notes">
-                <div style="font-size: 50px; margin-bottom: 10px;">🌌</div>
-                <div>Пока нет заметок.<br>Добавьте первую!</div>
+                <div style="font-size: 60px; margin-bottom: 15px;">🌌</div>
+                <div>Пока нет планет в этой ветви.<br>Создайте первую!</div>
             </div>
         `;
         return;
@@ -411,8 +461,6 @@ function renderNotesList() {
         container.appendChild(card);
     });
 }
-
-// ==================== ЗАМЕТКИ ====================
 
 function saveNote() {
     if (!currentBranch) return;
@@ -437,54 +485,28 @@ function saveNote() {
     document.getElementById('note-input').value = '';
     
     tg.showPopup({
-        title: '✅ Успех!',
-        message: `Планета создана в "${branches[currentBranch].name}"`,
+        title: '✨ Планета создана!',
+        message: `Новая планета добавлена в "${branches[currentBranch].name}"`,
         buttons: [{type: 'ok'}]
     });
     
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.notificationOccurred('success');
-    }
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 }
 
 function deleteNote(index) {
     if (!currentBranch) return;
     
-    tg.showConfirm('Удалить эту заметку?', (confirmed) => {
+    tg.showConfirm('Удалить эту планету?', (confirmed) => {
         if (confirmed) {
             branches[currentBranch].notes.splice(index, 1);
             saveData();
             renderNotesList();
             renderUniverse();
             updateStats();
-            
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('warning');
-            }
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
         }
     });
 }
-
-// ==================== БЫСТРОЕ ДОБАВЛЕНИЕ ====================
-
-function showQuickAdd() {
-    const buttons = Object.keys(branches).map(key => ({
-        text: `${branches[key].icon} ${branches[key].name}`,
-        id: key
-    }));
-    
-    tg.showPopup({
-        title: 'Выберите ветвь',
-        message: 'В какую ветвь добавить заметку?',
-        buttons: buttons.concat([{type: 'cancel'}])
-    }, (buttonId) => {
-        if (buttonId !== 'cancel' && branches[buttonId]) {
-            openBranchModal(buttonId);
-        }
-    });
-}
-
-// ==================== ПЕРЕИМЕНОВАНИЕ ====================
 
 function renameBranch() {
     if (!currentBranch) return;
@@ -497,12 +519,100 @@ function renameBranch() {
         saveCustomNames();
         document.getElementById('modal-name').textContent = newName.trim();
         renderUniverse();
-        
-        tg.showAlert('Название изменено!');
+        tg.showAlert('✅ Название изменено!');
     }
 }
 
-// ==================== ИНФОРМАЦИЯ О ЯДРЕ ====================
+// ==================== ПРЕМИУМ ====================
+
+function showPremium() {
+    document.getElementById('premium-modal').classList.add('active');
+    updateSkinSelector();
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+}
+
+function closePremium() {
+    document.getElementById('premium-modal').classList.remove('active');
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+}
+
+function selectSkin(skinName) {
+    if (skinName !== 'default' && !isPremium) {
+        unlockSkin(skinName);
+        return;
+    }
+    
+    currentSkin = skinName;
+    savePremium();
+    renderUniverse();
+    updateSkinSelector();
+    
+    tg.showAlert(`✅ Скин "${skinName}" применён!`);
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+}
+
+function updateSkinSelector() {
+    document.querySelectorAll('.skin-option').forEach(option => {
+        option.classList.remove('selected');
+        if (!isPremium) {
+            if (!option.classList.contains('locked')) {
+                option.classList.add('locked');
+            }
+        } else {
+            option.classList.remove('locked');
+        }
+    });
+    
+    // Разблокируем дефолтный
+    const defaultOption = document.querySelector('.skin-option');
+    defaultOption.classList.remove('locked');
+    defaultOption.onclick = () => selectSkin('default');
+    
+    // Выделяем текущий
+    const allOptions = document.querySelectorAll('.skin-option');
+    const skins = ['default', 'crystal', 'neon', 'galaxy'];
+    const currentIndex = skins.indexOf(currentSkin);
+    if (currentIndex !== -1 && allOptions[currentIndex]) {
+        allOptions[currentIndex].classList.add('selected');
+    }
+}
+
+function unlockSkin(skinName) {
+    tg.showPopup({
+        title: '🔒 Premium функция',
+        message: 'Этот скин доступен только с Premium подпиской',
+        buttons: [
+            { id: 'buy', text: 'Купить Premium' },
+            { type: 'cancel' }
+        ]
+    }, (buttonId) => {
+        if (buttonId === 'buy') {
+            buyPremium();
+        }
+    });
+}
+
+function buyPremium() {
+    // Здесь интеграция с оплатой Telegram Stars или другой системой
+    tg.showPopup({
+        title: '💳 Оплата Premium',
+        message: 'Функция оплаты будет доступна после интеграции с Telegram Stars. Для демонстрации активируем Premium бесплатно!',
+        buttons: [
+            { id: 'demo', text: 'Активировать демо' },
+            { type: 'cancel' }
+        ]
+    }, (buttonId) => {
+        if (buttonId === 'demo') {
+            isPremium = true;
+            savePremium();
+            updateSkinSelector();
+            tg.showAlert('🎉 Premium активирован!');
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        }
+    });
+}
+
+// ==================== ИНФОРМАЦИЯ ====================
 
 function showCoreInfo() {
     let total = 0;
@@ -510,13 +620,11 @@ function showCoreInfo() {
     
     tg.showPopup({
         title: '🌌 Моя Вселенная',
-        message: `Всего заметок: ${total}\nВетвей: ${Object.keys(branches).length}\n\nКаждая заметка — это планета в вашей вселенной знаний!`,
+        message: `Всего планет: ${total}\nВетвей: ${Object.keys(branches).length}\n\nИспользуйте жесты для навигации:\n• Pinch - зум\n• Drag - перемещение\n• Кнопки справа - управление`,
         buttons: [{type: 'ok'}]
     });
     
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('medium');
-    }
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 }
 
 // ==================== СТАТИСТИКА ====================
@@ -534,20 +642,6 @@ function updateStats() {
     document.getElementById('total-notes').textContent = total;
     document.getElementById('active-branches').textContent = active;
     document.getElementById('total-planets').textContent = total;
-}
-
-// ==================== КАНВАС ====================
-
-function setupCanvas() {
-    const canvas = document.getElementById('universe-canvas');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        renderUniverse();
-    });
 }
 
 // ==================== УТИЛИТЫ ====================
@@ -582,7 +676,7 @@ function showLoader() {
 function hideLoader() {
     setTimeout(() => {
         document.getElementById('loader').classList.add('hidden');
-    }, 800);
+    }, 1000);
 }
 
 // ==================== ЗАПУСК ====================
